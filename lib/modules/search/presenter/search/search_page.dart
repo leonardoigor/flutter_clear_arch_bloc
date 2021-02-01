@@ -1,0 +1,81 @@
+import 'package:cleanArchitecture/modules/search/presenter/search/search_bloc.dart';
+import 'package:cleanArchitecture/modules/search/presenter/search/states/state.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_modular/flutter_modular.dart';
+
+class SearchPage extends StatefulWidget {
+  @override
+  _SearchPageState createState() => _SearchPageState();
+}
+
+class _SearchPageState extends State<SearchPage> {
+  final bloc = Modular.get<SearchBloc>();
+
+  @override
+  void dispose() {
+    super.dispose();
+    bloc.close();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('GitHun Search'),
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0, left: 8, top: 8),
+            child: TextField(
+              onSubmitted: bloc.add,
+              decoration: InputDecoration(
+                  border: OutlineInputBorder(), labelText: 'Search...'),
+            ),
+          ),
+          Expanded(
+            child: StreamBuilder(
+                stream: bloc,
+                builder: (context, snapshot) {
+                  final state = bloc.state;
+
+                  if (state is SearchStart) {
+                    return Center(
+                      child: Text('Digite um Texto'),
+                    );
+                  }
+                  if (state is SearchError) {
+                    return Center(
+                      child: Text('Ouver um Erro'),
+                    );
+                  }
+                  if (state is SearchLoading) {
+                    return Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  }
+
+                  final list = (state as SearchSucces).list;
+                  return ListView.builder(
+                    itemBuilder: (_, id) {
+                      final item = list[id];
+
+                      return ListTile(
+                        title: Text(item.title ?? ""),
+                        subtitle: Text(item.content.toString()),
+                        leading: item.img == null
+                            ? Container()
+                            : CircleAvatar(
+                                backgroundImage: NetworkImage(item.img),
+                              ),
+                      );
+                    },
+                    itemCount: list.length,
+                  );
+                }),
+          ),
+        ],
+      ),
+    );
+  }
+}
